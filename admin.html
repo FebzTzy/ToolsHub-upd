@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — Locked</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body{padding-top:22px}
+  .admin-wrap{max-width:720px;margin:0 auto;padding:0 20px 60px;position:relative;z-index:2}
+  .admin-title{font-size:1.6rem;font-weight:800;color:var(--gold);text-align:center;margin-bottom:6px}
+  .admin-sub{text-align:center;color:var(--dim);font-size:.82rem;margin-bottom:22px}
+  .admin-card{background:linear-gradient(160deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:18px}
+  .admin-card h3{font-size:.95rem;color:var(--neon);margin-bottom:12px;letter-spacing:1px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row > .field{flex:1;min-width:140px;margin-bottom:12px}
+  .code-list{margin-top:10px;max-height:320px;overflow:auto}
+  .code-item{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:10px 14px;border-radius:10px;border:1px solid var(--line);
+    background:rgba(255,255,255,.03);margin-bottom:8px;font-size:.82rem}
+  .code-item .cd{font-family:monospace;color:var(--neon);font-weight:800;letter-spacing:1px}
+  .code-item .amt{color:var(--gold);font-weight:700}
+  .code-item .act{display:flex;gap:6px}
+  .code-item button{background:transparent;border:1px solid var(--line);color:var(--dim);
+    padding:4px 8px;border-radius:6px;font-size:.7rem;cursor:pointer;font-family:inherit}
+  .code-item button:hover{border-color:var(--warn);color:var(--warn)}
+  .used-badge{font-size:.66rem;color:var(--ok);border:1px solid rgba(0,255,163,.4);
+    padding:2px 8px;border-radius:999px;background:rgba(0,255,163,.08)}
+
+  /* LOCK SCREEN */
+  .lock-screen{
+    position:fixed;inset:0;z-index:100;
+    background:radial-gradient(ellipse at 50% 30%, rgba(0,229,255,.08), transparent 60%), #05060a;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .lock-box{
+    width:100%;max-width:400px;
+    background:linear-gradient(160deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line);border-radius:20px;padding:28px 24px;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.8);
+    animation:pop .3s ease;
+  }
+  @keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+  .lock-icon{
+    text-align:center;font-size:3rem;margin-bottom:14px;
+    filter:drop-shadow(0 0 20px rgba(251,191,36,.7));
+  }
+  .lock-title{
+    text-align:center;font-size:1.1rem;font-weight:800;
+    color:var(--gold);margin-bottom:6px;letter-spacing:1px;
+  }
+  .lock-sub{
+    text-align:center;font-size:.78rem;color:var(--dim);margin-bottom:20px;
+  }
+  .lock-input{
+    width:100%;padding:13px 16px;border-radius:12px;
+    background:#0a0c14;border:1.5px solid var(--line);
+    color:var(--txt);font-family:inherit;font-size:1rem;
+    text-align:center;letter-spacing:4px;
+    outline:none;transition:all .2s ease;
+  }
+  .lock-input:focus{
+    border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(251,191,36,.15), 0 0 24px rgba(251,191,36,.3);
+  }
+  .lock-btn{
+    width:100%;margin-top:14px;padding:13px;
+    border:none;border-radius:12px;
+    background:linear-gradient(90deg, var(--gold), #f59e0b);
+    color:#3a2600;font-weight:800;font-size:.9rem;letter-spacing:1.4px;
+    cursor:pointer;font-family:inherit;
+    transition:all .2s ease;
+  }
+  .lock-btn:hover{transform:translateY(-1px);box-shadow:0 0 30px rgba(251,191,36,.6)}
+  .lock-btn:active{transform:scale(.98)}
+  .lock-err{
+    margin-top:12px;text-align:center;font-size:.8rem;
+    color:var(--warn);min-height:18px;
+    opacity:0;transition:opacity .2s;
+  }
+  .lock-err.show{opacity:1}
+  .lock-hint{
+    margin-top:16px;text-align:center;font-size:.68rem;
+    color:var(--dim);letter-spacing:.5px;
+  }
+  .admin-content{display:none}
+  .admin-content.unlocked{display:block}
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">ADMIN PANEL</div>
+    <div class="lock-sub">Masukkan PIN untuk melanjutkan</div>
+    <input type="password" id="pinInput" class="lock-input" placeholder="••••" maxlength="20" autocomplete="off" inputmode="numeric">
+    <button class="lock-btn" id="pinSubmit">BUKA</button>
+    <div class="lock-err" id="pinErr"></div>
+    <div class="lock-hint">owner: FebzTzy</div>
+  </div>
+</div>
+
+<!-- ADMIN CONTENT -->
+<div class="admin-wrap admin-content" id="adminContent">
+  <div class="admin-title">🔐 Admin Panel — Coin Code Generator</div>
+  <div class="admin-sub">Generate kode redeem coin untuk user ToolHub · by FebzTzy</div>
+
+  <div class="admin-card">
+    <h3>➕ BUAT KODE BARU</h3>
+    <div class="row">
+      <div class="field"><label>Jumlah Coin</label><input type="number" id="genCoins" value="10"></div>
+      <div class="field"><label>Jumlah Kode</label><input type="number" id="genQty" value="1"></div>
+      <div class="field"><label>Prefix</label><input type="text" id="genPrefix" value="FEBZ"></div>
+    </div>
+    <div class="btn-row" style="margin-top:6px">
+      <button class="btn btn-primary" id="genBtn">🎟️ Generate</button>
+      <button class="btn btn-ghost" id="clearBtn">🗑️ Hapus Semua</button>
+    </div>
+    <div class="result" id="genResult"></div>
+  </div>
+
+  <div class="admin-card">
+    <h3>📋 DAFTAR KODE</h3>
+    <div class="code-list" id="codeList"></div>
+  </div>
+
+  <div class="btn-row" style="justify-content:center">
+    <button class="btn btn-ghost" id="logoutBtn" style="max-width:220px">🔒 Logout</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   PIN GATE
+   ============================================================ */
+const ADMIN_PIN = "162010";  // ← GANTI PIN INI
+const SESSION_KEY = "toolhub_admin_session_v1";
+const SESSION_TTL = 30 * 60 * 1000; // 30 menit
+
+function isUnlocked(){
+  try{
+    const raw = localStorage.getItem(SESSION_KEY);
+    if(!raw) return false;
+    const s = JSON.parse(raw);
+    return s.ok && (Date.now() - s.time) < SESSION_TTL;
+  }catch{ return false; }
+}
+function setUnlocked(){
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ ok:true, time: Date.now() }));
+}
+function lockSession(){
+  localStorage.removeItem(SESSION_KEY);
+}
+function unlockUI(){
+  document.getElementById("lockScreen").style.display = "none";
+  document.getElementById("adminContent").classList.add("unlocked");
+}
+function lockUI(){
+  document.getElementById("lockScreen").style.display = "flex";
+  document.getElementById("adminContent").classList.remove("unlocked");
+  document.getElementById("pinInput").value = "";
+  document.getElementById("pinErr").classList.remove("show");
+}
+
+function tryUnlock(){
+  const input = document.getElementById("pinInput");
+  const err = document.getElementById("pinErr");
+  const pin = (input.value||"").trim();
+  if(!pin){
+    err.textContent = "Masukkan PIN dulu.";
+    err.classList.add("show");
+    return;
+  }
+  if(pin === ADMIN_PIN){
+    setUnlocked();
+    unlockUI();
+  } else {
+    err.textContent = "❌ PIN salah.";
+    err.classList.add("show");
+    input.value = "";
+    input.focus();
+    // efek shake kecil
+    input.style.borderColor = "var(--warn)";
+    setTimeout(()=>{ input.style.borderColor = ""; }, 500);
+  }
+}
+
+document.getElementById("pinSubmit").onclick = tryUnlock;
+document.getElementById("pinInput").addEventListener("keydown", e => {
+  if(e.key === "Enter") tryUnlock();
+});
+document.getElementById("logoutBtn").onclick = () => {
+  if(!confirm("Logout dari admin panel?")) return;
+  lockSession();
+  lockUI();
+};
+
+/* init */
+if(isUnlocked()){
+  unlockUI();
+} else {
+  lockUI();
+  setTimeout(()=>document.getElementById("pinInput").focus(), 300);
+}
+</script>
+
+<!-- load admin logic SETELAH gate resolve -->
+<script src="admin.js"></script>
+</body>
+</html>

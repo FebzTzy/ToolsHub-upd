@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ToolHub by FebzTzy</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar" id="topbar">
+  <div class="topbar-left">
+    <div class="coin-badge" id="coinBadge">
+      <span class="coin-ico">🪙</span>
+      <span class="coin-val" id="coinVal">0</span>
+    </div>
+    <button class="checkin-btn" id="checkinBtn" type="button">
+      <span class="ci-ico">🎁</span>
+      <span class="ci-txt" id="checkinTxt">CHECK IN</span>
+    </button>
+  </div>
+  <div class="topbar-right">
+    <button class="tb-btn redeem-btn" id="redeemBtn" type="button" title="Redeem Code">
+      🎟️ <span>REDEEM</span>
+    </button>
+    <button class="tb-btn wa-btn" id="waBtn" type="button" title="WhatsApp Owner">
+      💬 <span>OWNER</span>
+    </button>
+  </div>
+</div>
+
+<header>
+  <div class="clock-bar" id="clockBar">
+    <div class="clock-seg"><span class="clock-label">JAM</span><span class="clock-val" id="clockTime">--:--:--</span></div>
+    <span class="clock-sep">•</span>
+    <div class="clock-seg"><span class="clock-label">HARI</span><span class="clock-val" id="clockDay">-</span></div>
+    <span class="clock-sep">•</span>
+    <div class="clock-seg"><span class="clock-label">TANGGAL</span><span class="clock-val" id="clockDate">-</span></div>
+    <span class="clock-sep">•</span>
+    <div class="clock-seg"><span class="clock-label">TAHUN</span><span class="clock-val" id="clockYear">-</span></div>
+  </div>
+
+  <div class="banner-wrapper" id="bannerWrapper">
+    <video id="bannerVideo" autoplay muted loop playsinline preload="auto">
+      <source src="https://files.catbox.moe/vl3v6s.mp4" type="video/mp4">
+    </video>
+    <div class="banner-play-hint">▶</div>
+    <div class="banner-overlay">
+      <div class="banner-text">🛠 Ðé Morià - #Stvn</div>
+      <div class="banner-sub">Powered by @FebzTzy</div>
+    </div>
+  </div>
+
+  <div class="logo">Ðé Morià<span></span></div>
+  <p class="tagline"> tools serbaguna — generator, dan utilitas.</p>
+  <div class="owner-badge"><i></i> Owner: FebzTzy</div>
+  <div class="pulse"><i></i> sistem online</div>
+
+  <div class="menu-buttons">
+    <button class="tools-toggle" id="toolsToggle" type="button"><span>TOOLS</span><i class="chev">▾</i></button>
+    <button class="tools-toggle cracker-toggle" id="crackerToggle" type="button"><span>CRACKER</span><i class="chev">▾</i></button>
+    <button class="tools-toggle webtool-toggle" id="webtoolToggle" type="button"><span>WEB TO FILE</span><i class="chev">▾</i></button>
+  </div>
+</header>
+
+<div class="tools-menu" id="toolsMenu"><div class="tools-menu-inner" id="toolsMenuInner"></div></div>
+<div class="tools-menu" id="crackerMenu"><div class="tools-menu-inner" id="crackerMenuInner"></div></div>
+<div class="tools-menu" id="webtoolMenu"><div class="tools-menu-inner" id="webtoolMenuInner"></div></div>
+
+<footer>Tools · by <b>FebzTzy</b> — powered by FebzTzy</footer>
+
+<!-- MODAL TOOL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="close" onclick="closeModal()">&times;</button>
+    <h2 id="mTitle">Tool</h2>
+    <p class="sub" id="mSub">Isi parameter di bawah</p>
+    <div class="owner-tag">created by <b>FebzTzy</b></div>
+    <div class="cost-tag" id="mCost">🪙 1 coin</div>
+    <form id="mForm" onsubmit="return false;"><div id="mFields"></div></form>
+    <div class="loader" id="mLoader"><div class="spinner"></div><span>memproses…</span></div>
+    <div class="result" id="mResult"></div>
+    <div class="btn-row" id="mActions">
+      <button class="btn btn-ghost" onclick="closeModal()">Tutup</button>
+      <button class="btn btn-primary" id="mExec" onclick="executeTool()">Eksekusi</button>
+      <button class="btn btn-dl" id="mDl" style="display:none" onclick="downloadResult()">Download</button>
+    </div>
+    <div class="btn-row" id="mExtra" style="display:none"></div>
+  </div>
+</div>
+
+<!-- MODAL REDEEM -->
+<div class="overlay" id="redeemOverlay">
+  <div class="modal modal-sm">
+    <button class="close" onclick="closeRedeem()">&times;</button>
+    <h2>🎟️ Redeem Code</h2>
+    <p class="sub">Masukkan kode dari owner untuk dapat coin.</p>
+    <div class="field">
+      <label>Kode Redeem</label>
+      <input type="text" id="redeemInput" placeholder="contoh: FEBZ-XXXX-XXXX" autocomplete="off">
+    </div>
+    <div class="result" id="redeemResult"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeRedeem()">Tutup</button>
+      <button class="btn btn-primary" id="redeemSubmit">Tukar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CHECK-IN -->
+<div class="overlay" id="checkinOverlay">
+  <div class="modal modal-sm">
+    <button class="close" onclick="closeCheckin()">&times;</button>
+    <h2 id="ciTitle">🎁 Check In</h2>
+    <p class="sub" id="ciSub">Klaim 5 coin gratis setiap 3 jam.</p>
+    <div class="checkin-visual" id="ciVisual">
+      <div class="ci-big" id="ciBig">🎁</div>
+      <div class="ci-msg" id="ciMsg">Tekan tombol di bawah untuk klaim.</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeCheckin()">Tutup</button>
+      <button class="btn btn-primary" id="ciClaim">Klaim 5 Coin</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
