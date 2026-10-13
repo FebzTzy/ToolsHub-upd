@@ -1,7 +1,8 @@
 const { getStore } = require("@netlify/blobs");
 
 const CHECKIN_INTERVAL = 3 * 60 * 60 * 1000;
-const CHECKIN_REWARD   = 3;
+const CHECKIN_REWARD   = 5;
+const WELCOME_REWARD   = 3;
 const ADMIN_TOKEN      = "FEBZ-OWNER-8505";
 
 const CORS = {
@@ -10,12 +11,8 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type, X-Admin-Token"
 };
 
-function ok(data){
-  return { statusCode:200, headers:{ ...CORS, "Content-Type":"application/json" }, body: JSON.stringify(data) };
-}
-function err(msg, extra){
-  return { statusCode:400, headers:{ ...CORS, "Content-Type":"application/json" }, body: JSON.stringify(Object.assign({ error: msg }, extra||{})) };
-}
+function ok(data){ return { statusCode:200, headers:{ ...CORS, "Content-Type":"application/json" }, body: JSON.stringify(data) }; }
+function err(msg, extra){ return { statusCode:400, headers:{ ...CORS, "Content-Type":"application/json" }, body: JSON.stringify(Object.assign({ error: msg }, extra||{})) }; }
 function randSeg(n){
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let s = "";
@@ -34,7 +31,7 @@ exports.handler = async (event) => {
 
     const store = getStore("toolhub");
 
-    /* === ADMIN ACTIONS === */
+    /* === ADMIN === */
     const token = event.headers["x-admin-token"] || event.headers["X-Admin-Token"];
     if(action && action.startsWith("admin-")){
       if(token !== ADMIN_TOKEN) return err("token admin salah");
@@ -76,20 +73,33 @@ exports.handler = async (event) => {
       return err("action admin tidak dikenal");
     }
 
-    /* === USER ACTIONS === */
+    /* === USER === */
     if(!userId) return err("userId wajib");
-
     const userKey = "user:" + userId;
-    let u = await store.get(userKey, { type:"json" });
-    if(!u){
-      u = { coins:0, lastCheckin:0, createdAt: Date.now() };
-      await store.setJSON(userKey, u);
-    }
 
     if(action === "get"){
+      let u = await store.get(userKey, { type:"json" });
+      let isNew = false;
+      if(!u){
+        u = { coins: WELCOME_REWARD, lastCheckin: 0, createdAt: Date.now() };
+        await store.setJSON(userKey, u);
+        isNew = true;
+      }
       const ready = Date.now() - (u.lastCheckin||0) >= CHECKIN_INTERVAL;
-      return ok({ coins: u.coins|0, checkinReady: ready, lastCheckin: u.lastCheckin|0 });
+      return ok({
+        coins: u.coins|0,
+        checkinReady: ready,
+        lastCheckin: u.lastCheckin|0,
+        welcome: isNew,
+        welcomeReward: WELCOME_REWARD
+      });
     }
+
+    let u = await store.get(userKey, { type:"json" });
+    if(!u){
+      u = { coins: WELCOME_REWARD, lastCheckin: 0, createdAt: Date.now() };
+    }
+
     if(action === "add"){
       u.coins = (u.coins|0) + Math.max(0, parseInt(body.amount)||0);
       await store.setJSON(userKey, u);
@@ -122,9 +132,7 @@ exports.handler = async (event) => {
       const item = await store.get(codeKey, { type:"json" });
       if(!item) return err("kode invalid");
       if(item.used) return err("kode sudah dipakai");
-      item.used = true;
-      item.usedBy = userId;
-      item.usedAt = Date.now();
+      item.used = true; item.usedBy = userId; item.usedAt = Date.now();
       await store.setJSON(codeKey, item);
       u.coins = (u.coins|0) + (item.coins|0);
       await store.setJSON(userKey, u);
