@@ -1,5 +1,3 @@
-/* Admin panel — pakai action admin-* di /api/coins */
-
 const ADMIN_TOKEN = "FEBZ-OWNER-8505";
 const API = "/api/coins";
 
