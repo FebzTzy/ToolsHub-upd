@@ -1,6 +1,4 @@
-/* ============================================================
-   BANNER VIDEO
-   ============================================================ */
+/* BANNER VIDEO */
 (function(){
   const v = document.getElementById("bannerVideo");
   const wrap = document.getElementById("bannerWrapper");
@@ -19,9 +17,7 @@
   v.addEventListener("ended", ()=>{ v.currentTime = 0; v.play().catch(()=>{}); });
 })();
 
-/* ============================================================
-   LIVE CLOCK
-   ============================================================ */
+/* LIVE CLOCK */
 (function(){
   const elTime = document.getElementById("clockTime");
   const elDay  = document.getElementById("clockDay");
@@ -42,9 +38,7 @@
   tick(); setInterval(tick, 1000);
 })();
 
-/* ============================================================
-   API & CONFIG
-   ============================================================ */
+/* CONFIG */
 const BASE = "https://api.nexray.eu.cc";
 const AMPREM_API = "https://anita-studio.netlify.app/.netlify/functions/amprem";
 
@@ -53,7 +47,7 @@ const OWNER_WA   = "6289679137206";
 const WA_MSG_BUG = "Halo owner, saya mau lapor BUG di ToolHub:";
 const WA_MSG_BUY = "Halo owner, saya mau BELI COIN ToolHub.";
 
-const AMPREM_OWNER_CODE = "ALIGHT-VIP-5509";
+const AMPREM_OWNER_CODE = "ALIGHT-VIP-2024";
 const AMPREM_WA_NUMBER  = OWNER_WA;
 const AMPREM_WA_MSG     = "Halo kak, saya ingin beli kode Unlimited Access untuk Alight Motion Premium (ToolHub by "+OWNER_NAME+"). Mohon info harga & cara pembayarannya 🙏";
 const AMPREM_TRIAL_LIMIT = 3;
@@ -63,9 +57,7 @@ const COST_TOOLS   = 1;
 const COST_CRACKER = 3;
 const COST_WEBTOOL = 1;
 
-/* ============================================================
-   COIN SYSTEM — serverless
-   ============================================================ */
+/* COIN SYSTEM */
 const API_COIN = "/api/coins";
 const USER_KEY = "toolhub_userid_v1";
 
@@ -102,19 +94,34 @@ async function refreshCoins(){
     lastCheckinCache = d.lastCheckin|0;
     renderCoins();
     renderCheckin();
+    if(d.welcome && d.welcomeReward){
+      showWelcomeToast(d.welcomeReward);
+    }
   }catch(e){
     console.warn("coin refresh gagal:", e.message);
   }
 }
+
+function showWelcomeToast(amount){
+  const badge = document.getElementById("coinBadge");
+  if(badge){
+    badge.classList.add("welcome-pop");
+    setTimeout(()=>badge.classList.remove("welcome-pop"), 2000);
+  }
+  const toast = document.createElement("div");
+  toast.className = "welcome-toast";
+  toast.textContent = "🎉 Selamat datang! +" + amount + " coin gratis";
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(), 4200);
+}
+
 function getCoins(){ return coinCache; }
 function renderCoins(){
   const el = document.getElementById("coinVal");
   if(el) el.textContent = coinCache;
 }
 
-/* ============================================================
-   CHECK-IN
-   ============================================================ */
+/* CHECK-IN */
 const CHECKIN_INTERVAL = 3 * 60 * 60 * 1000;
 
 function fmtLeft(){
@@ -180,9 +187,7 @@ async function doClaimCheckin(){
   }
 }
 
-/* ============================================================
-   REDEEM
-   ============================================================ */
+/* REDEEM */
 function openRedeem(){
   document.getElementById("redeemOverlay").classList.add("open");
   const input = document.getElementById("redeemInput");
@@ -212,9 +217,7 @@ async function submitRedeem(){
   }
 }
 
-/* ============================================================
-   TOOLS DATA
-   ============================================================ */
+/* TOOLS DATA */
 let activeTool = null;
 let lastResult = null;
 let ampremState = null;
@@ -255,6 +258,205 @@ const TOOLS = [
     fields:[
       {key:"avatar",label:"URL Avatar",type:"text",placeholder:"https://files.catbox.moe/xxx.jpg"},
       {key:"username",label:"Username",type:"text",placeholder:"username_ig"},
+      {key:"caption",label:"Caption",type:"textarea",placeholder:"tulis caption di sini"}
+    ],
+    buildURL: p => BASE+"/maker/fakestory?avatar="+encodeURIComponent(p.avatar||"")+"&username="+encodeURIComponent(p.username||"")+"&caption="+encodeURIComponent(p.caption||""),
+    filename: p => "fakestory_"+(p.username||"user").replace(/[^a-z0-9]/gi,"_")+"_"+Date.now()+".png" },
+
+  { id:"iqc_v1", title:"IQC v1", desc:"Generate IQC versi 1 — masukkan teks.",
+    ico:"🧪", acc:"acc-green",
+    fields:[{key:"text",label:"Teks",type:"textarea",placeholder:"tulis teks di sini"}],
+    buildURL: p => BASE+"/maker/iqc?text="+encodeURIComponent(p.text||""),
+    filename: () => "iqc_v1_"+Date.now()+".png" },
+
+  { id:"iqc_v2", title:"IQC v2", desc:"IQC v2 — teks, provider, jam, baterai.",
+    ico:"🧬", acc:"acc-green",
+    fields:[
+      {key:"text",label:"Teks",type:"textarea",placeholder:"tulis teks di sini"},
+      {key:"provider",label:"Provider",type:"select",options:["Telkomsel","Indosat","XL","Tri","Smartfren","Axis"]},
+      {key:"jam",label:"Jam",type:"text",placeholder:"14:30"},
+      {key:"baterai",label:"Baterai (%)",type:"number",placeholder:"85"}
+    ],
+    buildURL: p => BASE+"/maker/v1/iqc?text="+encodeURIComponent(p.text||"")+"&provider="+encodeURIComponent(p.provider||"")+"&jam="+encodeURIComponent(p.jam||"")+"&baterai="+encodeURIComponent(p.baterai||""),
+    filename: () => "iqc_v2_"+Date.now()+".png" },
+
+  { id:"wink_hdr", title:"Wink HDR", desc:"Enhance foto / video via Wink HDR — masukkan URL.",
+    ico:"🪄", acc:"acc-red",
+    fields:[
+      {key:"url",label:"URL Foto / Video",type:"text",placeholder:"https://files.catbox.moe/xxx.mp4"},
+      {key:"type",label:"Tipe",type:"select",options:["image","video"]}
+    ],
+    buildURL: p => BASE+"/tools/wink?url="+encodeURIComponent(p.url||"")+"&type="+encodeURIComponent(p.type||"image"),
+    filename: p => "winkhdr_"+(p.type||"image")+"_"+Date.now()+(p.type==="video"?".mp4":".png") },
+
+  { id:"hdvideo", title:"HD Video V1", desc:"Upgrade resolusi video — hd / full-hd / 2k / 4k.",
+    ico:"🎬", acc:"acc-red",
+    fields:[
+      {key:"url",label:"URL Video",type:"text",placeholder:"https://files.catbox.moe/xxx.mp4"},
+      {key:"resolusi",label:"Resolusi",type:"select",options:["hd","full-hd","2k","4k"]}
+    ],
+    buildURL: p => BASE+"/tools/v1/hdvideo?url="+encodeURIComponent(p.url||"")+"&resolusi="+encodeURIComponent(p.resolusi||"hd"),
+    filename: p => "hdvideo_"+(p.resolusi||"hd")+"_"+Date.now()+".mp4" },
+
+  { id:"remini", title:"Remini", desc:"Perjelas & pertegas foto via Remini — masukkan URL.",
+    ico:"🖼️", acc:"acc-red",
+    fields:[{key:"url",label:"URL Foto",type:"text",placeholder:"https://files.catbox.moe/xxx.jpg"}],
+    buildURL: p => BASE+"/tools/remini?url="+encodeURIComponent(p.url||""),
+    filename: () => "remini_"+Date.now()+".png" },
+
+  { id:"unblur", title:"Unblur Image", desc:"Pertajam / hilangkan blur foto.",
+    ico:"🔍", acc:"acc-red",
+    fields:[{key:"url",label:"URL Foto",type:"text",placeholder:"https://files.catbox.moe/xxx.jpg"}],
+    buildURL: p => BASE+"/tools/unblur?url="+encodeURIComponent(p.url||""),
+    filename: () => "unblur_"+Date.now()+".png" },
+
+  { id:"nikparse", title:"NIK Parse", desc:"Parse NIK 16 digit — wilayah, tanggal lahir, gender.",
+    ico:"🪪", acc:"acc-warn", category:"cracker",
+    fields:[{key:"nik",label:"NIK (16 digit)",type:"text",placeholder:"contoh: 3201xxxxxxxxxxxx"}],
+    buildURL: p => BASE+"/tools/nikparse?nik="+encodeURIComponent(p.nik||""),
+    filename: () => "nikparse_"+Date.now()+".txt" },
+
+  { id:"trackip", title:"Track IP", desc:"Lacak IP dari domain / URL.",
+    ico:"🌐", acc:"acc-warn", category:"cracker",
+    fields:[{key:"target",label:"Target (domain / URL)",type:"text",placeholder:"google.com"}],
+    buildURL: p => BASE+"/tools/trackip?target="+encodeURIComponent(p.target||""),
+    filename: () => "trackip_"+Date.now()+".txt" },
+
+  { id:"spamngl", title:"Spam NGL", desc:"Kirim pesan ke link NGL.",
+    ico:"💬", acc:"acc-warn", category:"cracker",
+    fields:[
+      {key:"url",label:"URL NGL",type:"text",placeholder:"https://ngl.link/febztzy"},
+      {key:"pesan",label:"Pesan",type:"textarea",placeholder:"tulis pesan di sini"},
+      {key:"jumlah",label:"Jumlah",type:"number",placeholder:"6"}
+    ],
+    buildURL: p => BASE+"/tools/spamngl?url="+encodeURIComponent(p.url||"")+"&pesan="+encodeURIComponent(p.pesan||"")+"&jumlah="+encodeURIComponent(p.jumlah||"1"),
+    filename: () => "spamngl_"+Date.now()+".txt" },
+
+  { id:"webtozip", title:"Web to Zip", desc:"Download seluruh halaman web jadi arsip zip.",
+    ico:"📦", acc:"acc-green", category:"webtool",
+    fields:[{key:"url",label:"URL Website",type:"text",placeholder:"https://keybypass.net/"}],
+    buildURL: p => BASE+"/tools/webtozip?url="+encodeURIComponent(p.url||""),
+    filename: () => "webtozip_"+Date.now()+".zip" },
+
+  { id:"amprem", title:"Create Alight Motion Premium",
+    desc:"Aktivasi Alight Motion Premium — kirim magic link, verifikasi, apply.",
+    ico:"✨", acc:"acc-red", special:"amprem" }
+];
+
+function costOf(tool){
+  if(!tool) return 0;
+  if(tool.category === "cracker") return COST_CRACKER;
+  if(tool.category === "webtool") return COST_WEBTOOL;
+  return COST_TOOLS;
+}
+
+/* RENDER MENU */
+const toolsToggle = document.getElementById("toolsToggle");
+const toolsMenu = document.getElementById("toolsMenu");
+const toolsMenuInner = document.getElementById("toolsMenuInner");
+const crackerToggle = document.getElementById("crackerToggle");
+const crackerMenu = document.getElementById("crackerMenu");
+const crackerMenuInner = document.getElementById("crackerMenuInner");
+const webtoolToggle = document.getElementById("webtoolToggle");
+const webtoolMenu = document.getElementById("webtoolMenu");
+const webtoolMenuInner = document.getElementById("webtoolMenuInner");
+
+function buildItem(t, menuEl, toggleEl){
+  const item = document.createElement("div");
+  item.className = "tool-item "+(t.acc||"");
+  const cost = costOf(t);
+  item.innerHTML = '<div class="ti-ico">'+t.ico+'</div>'+
+    '<div class="ti-info"><div class="ti-title">'+t.title+'</div>'+
+    '<div class="ti-sub">🪙 '+cost+' coin · by '+OWNER_NAME+'</div></div>'+
+    '<div class="ti-arrow">›</div>';
+  item.onclick = () => {
+    menuEl.classList.remove("open"); toggleEl.classList.remove("open");
+    openModal(t.id);
+  };
+  return item;
+}
+function closeAllMenus(except){
+  if(except!=="tools" && toolsMenu && toolsToggle){ toolsMenu.classList.remove("open"); toolsToggle.classList.remove("open"); }
+  if(except!=="cracker" && crackerMenu && crackerToggle){ crackerMenu.classList.remove("open"); crackerToggle.classList.remove("open"); }
+  if(except!=="webtool" && webtoolMenu && webtoolToggle){ webtoolMenu.classList.remove("open"); webtoolToggle.classList.remove("open"); }
+}
+if(toolsMenuInner && toolsMenu && toolsToggle){
+  TOOLS.filter(t => t.category !== "cracker" && t.category !== "webtool").forEach(t => {
+    toolsMenuInner.appendChild(buildItem(t, toolsMenu, toolsToggle));
+  });
+  toolsToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = toolsMenu.classList.toggle("open");
+    toolsToggle.classList.toggle("open", open);
+    if(open) closeAllMenus("tools");
+  });
+}
+if(crackerMenuInner && crackerMenu && crackerToggle){
+  TOOLS.filter(t => t.category === "cracker").forEach(t => {
+    crackerMenuInner.appendChild(buildItem(t, crackerMenu, crackerToggle));
+  });
+  crackerToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = crackerMenu.classList.toggle("open");
+    crackerToggle.classList.toggle("open", open);
+    if(open) closeAllMenus("cracker");
+  });
+}
+if(webtoolMenuInner && webtoolMenu && webtoolToggle){
+  TOOLS.filter(t => t.category === "webtool").forEach(t => {
+    webtoolMenuInner.appendChild(buildItem(t, webtoolMenu, webtoolToggle));
+  });
+  webtoolToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = webtoolMenu.classList.toggle("open");
+    webtoolToggle.classList.toggle("open", open);
+    if(open) closeAllMenus("webtool");
+  });
+}
+document.addEventListener("click", (e) => {
+  const insideTools = toolsMenu && toolsToggle && (toolsMenu.contains(e.target) || toolsToggle.contains(e.target));
+  const insideCracker = crackerMenu && crackerToggle && (crackerMenu.contains(e.target) || crackerToggle.contains(e.target));
+  const insideWeb = webtoolMenu && webtoolToggle && (webtoolMenu.contains(e.target) || webtoolToggle.contains(e.target));
+  if(!insideTools && !insideCracker && !insideWeb) closeAllMenus();
+});
+
+/* MODAL */
+function openModal(id){
+  activeTool = TOOLS.find(t => t.id === id);
+  if(!activeTool) return;
+  lastResult = null;
+  document.getElementById("mTitle").textContent = activeTool.title;
+  document.getElementById("mSub").textContent = activeTool.desc;
+  document.getElementById("mResult").className = "result";
+  document.getElementById("mResult").innerHTML = "";
+  document.getElementById("mLoader").className = "loader";
+  document.getElementById("mExec").disabled = false;
+  document.getElementById("mDl").style.display = "none";
+  document.getElementById("mExtra").style.display = "none";
+  document.getElementById("mExtra").innerHTML = "";
+  document.getElementById("mExec").style.display = "block";
+  const cost = costOf(activeTool);
+  const costEl = document.getElementById("mCost");
+  if(costEl) costEl.textContent = "🪙 "+cost+" coin / pakai";
+  if(activeTool.special === "amprem") renderAmpRem();
+  else renderGeneric();
+  document.getElementById("overlay").classList.add("open");
+}
+function closeModal(){
+  document.getElementById("overlay").classList.remove("open");
+  activeTool = null; lastResult = null; ampremState = null;
+}
+function renderGeneric(){
+  const wrap = document.getElementById("mFields");
+  wrap.innerHTML = "";
+  activeTool.fields.forEach(f => {
+    const div = document.createElement("div");
+    div.className = "field";
+    if(f.type === "select"){
+      div.innerHTML = '<label>'+f.label+'</label><select data-key="'+f.key+'">'+f.options.map(o=>'<option>'+o+'</option>').join("")+'</select>';
+    } else if(f.type === "textarea"){
+      div.innerHTML = '<label>'+f.label+'</label><textarea data-key="'+f.key+'" placeholder="'+(f.placeholder||"")+'"></textarea>';
+    } else  {key:"username",label:"Username",type:"text",placeholder:"username_ig"},
       {key:"caption",label:"Caption",type:"textarea",placeholder:"tulis caption di sini"}
     ],
     buildURL: p => BASE+"/maker/fakestory?avatar="+encodeURIComponent(p.avatar||"")+"&username="+encodeURIComponent(p.username||"")+"&caption="+encodeURIComponent(p.caption||""),
