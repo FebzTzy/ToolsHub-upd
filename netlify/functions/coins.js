@@ -1,4 +1,4 @@
-const { getStore } = require("@netlify/blobs");
+/* Coin + redeem — in-memory store (fallback karena Netlify Blobs gak aktif di plan free) */
 
 const CHECKIN_INTERVAL = 3 * 60 * 60 * 1000;
 const CHECKIN_REWARD   = 5;
@@ -20,6 +20,10 @@ function randSeg(n){
   return s;
 }
 
+/* in-memory store */
+let USERS = {};
+let CODES = {};
+
 exports.handler = async (event) => {
   try {
     if(event.httpMethod === "OPTIONS") return { statusCode:200, headers:CORS, body:"" };
@@ -29,21 +33,14 @@ exports.handler = async (event) => {
     try{ body = JSON.parse(event.body || "{}"); }catch{}
     const { userId, action } = body;
 
-    const store = getStore("toolhub");
-
     /* === ADMIN === */
     const token = event.headers["x-admin-token"] || event.headers["X-Admin-Token"];
     if(action && action.startsWith("admin-")){
       if(token !== ADMIN_TOKEN) return err("token admin salah");
 
       if(action === "admin-list"){
-        const { blobs } = await store.list({ prefix: "code:" });
-        const codes = [];
-        for(const b of blobs){
-          const data = await store.get(b.key, { type:"json" });
-          if(data) codes.push(Object.assign({ code: b.key.replace(/^code:/,"") }, data));
-        }
-        return ok({ codes });
+        const list = Object.entries(CODES).map(([code, meta]) => ({ code, ...meta }));
+        return ok({ codes: list });
       }
       if(action === "admin-create"){
         const coins  = Math.max(1, parseInt(body.coins)||0);
@@ -51,23 +48,19 @@ exports.handler = async (event) => {
         const prefix = String(body.prefix||"FEBZ").toUpperCase().replace(/[^A-Z0-9]/g,"") || "FEBZ";
         const made = [];
         for(let i=0;i<qty;i++){
-          let code, exists = true;
-          while(exists){
-            code = prefix+"-"+randSeg(4)+"-"+randSeg(4);
-            exists = !!(await store.get("code:"+code, { type:"json" }));
-          }
-          await store.setJSON("code:"+code, { coins, used:false, createdAt: Date.now() });
+          let code;
+          do { code = prefix+"-"+randSeg(4)+"-"+randSeg(4); } while(CODES[code]);
+          CODES[code] = { coins, used:false, createdAt: Date.now() };
           made.push(code);
         }
         return ok({ created: made });
       }
       if(action === "admin-delete"){
-        await store.delete("code:"+String(body.code||"").toUpperCase());
+        delete CODES[String(body.code||"").toUpperCase()];
         return ok({ deleted: body.code });
       }
       if(action === "admin-clear"){
-        const { blobs } = await store.list({ prefix: "code:" });
-        for(const b of blobs) await store.delete(b.key);
+        CODES = {};
         return ok({ cleared: true });
       }
       return err("action admin tidak dikenal");
@@ -75,46 +68,35 @@ exports.handler = async (event) => {
 
     /* === USER === */
     if(!userId) return err("userId wajib");
-    const userKey = "user:" + userId;
+    if(!USERS[userId]){
+      USERS[userId] = { coins: WELCOME_REWARD, lastCheckin: 0, createdAt: Date.now(), isNew: true };
+    }
+    const u = USERS[userId];
 
     if(action === "get"){
-      let u = await store.get(userKey, { type:"json" });
-      let isNew = false;
-      if(!u){
-        u = { coins: WELCOME_REWARD, lastCheckin: 0, createdAt: Date.now() };
-        await store.setJSON(userKey, u);
-        isNew = true;
-      }
       const ready = Date.now() - (u.lastCheckin||0) >= CHECKIN_INTERVAL;
+      const isWelcome = !!u.isNew;
+      if(u.isNew) u.isNew = false;   // welcome cuma sekali
       return ok({
         coins: u.coins|0,
         checkinReady: ready,
         lastCheckin: u.lastCheckin|0,
-        welcome: isNew,
+        welcome: isWelcome,
         welcomeReward: WELCOME_REWARD
       });
     }
-
-    let u = await store.get(userKey, { type:"json" });
-    if(!u){
-      u = { coins: WELCOME_REWARD, lastCheckin: 0, createdAt: Date.now() };
-    }
-
     if(action === "add"){
       u.coins = (u.coins|0) + Math.max(0, parseInt(body.amount)||0);
-      await store.setJSON(userKey, u);
       return ok({ coins: u.coins });
     }
     if(action === "spend"){
       const n = Math.max(0, parseInt(body.amount)||0);
       if((u.coins|0) < n) return err("coin kurang", { coins: u.coins|0 });
       u.coins = (u.coins|0) - n;
-      await store.setJSON(userKey, u);
       return ok({ coins: u.coins });
     }
     if(action === "refund"){
       u.coins = (u.coins|0) + Math.max(0, parseInt(body.amount)||0);
-      await store.setJSON(userKey, u);
       return ok({ coins: u.coins });
     }
     if(action === "checkin"){
@@ -122,25 +104,21 @@ exports.handler = async (event) => {
       if(!ready) return err("belum waktunya", { lastCheckin: u.lastCheckin|0 });
       u.lastCheckin = Date.now();
       u.coins = (u.coins|0) + CHECKIN_REWARD;
-      await store.setJSON(userKey, u);
       return ok({ coins: u.coins, reward: CHECKIN_REWARD });
     }
     if(action === "redeem"){
       const code = String(body.code||"").trim().toUpperCase();
       if(!code) return err("kode kosong");
-      const codeKey = "code:" + code;
-      const item = await store.get(codeKey, { type:"json" });
+      const item = CODES[code];
       if(!item) return err("kode invalid");
       if(item.used) return err("kode sudah dipakai");
-      item.used = true; item.usedBy = userId; item.usedAt = Date.now();
-      await store.setJSON(codeKey, item);
+      item.used = true;
       u.coins = (u.coins|0) + (item.coins|0);
-      await store.setJSON(userKey, u);
       return ok({ coins: u.coins, reward: item.coins });
     }
 
     return err("action tidak dikenal");
   } catch (e) {
-    return { statusCode:500, headers:{ ...CORS, "Content-Type":"application/json" }, body: JSON.stringify({ error: e.message, stack: e.stack }) };
+    return { statusCode:500, headers:{ ...CORS, "Content-Type":"application/json" }, body: JSON.stringify({ error: e.message }) };
   }
 };
