@@ -306,3 +306,39 @@ footer b{color:var(--gold);font-weight:800;letter-spacing:.5px}
   .clock-label{font-size:.52rem;letter-spacing:1.2px}
   .clock-val{font-size:.78rem;letter-spacing:.5px}
 }
+/* ===== WELCOME USER BARU ===== */
+.coin-badge.welcome-pop{
+  animation: welcomePop .6s ease;
+  box-shadow: 0 0 60px rgba(251,191,36,.9) !important;
+}
+@keyframes welcomePop{
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.25); }
+  60%  { transform: scale(.95); }
+  100% { transform: scale(1); }
+}
+
+.welcome-toast{
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(251,191,36,.98), rgba(245,158,11,.98));
+  color: #3a2600;
+  font-weight: 800;
+  font-size: .86rem;
+  letter-spacing: .5px;
+  z-index: 9999;
+  box-shadow: 0 8px 40px rgba(251,191,36,.6);
+  animation: welcomeSlide .5s cubic-bezier(.2,.8,.2,1);
+  white-space: nowrap;
+  max-width: 90vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@keyframes welcomeSlide{
+  from{ transform: translate(-50%, 30px); opacity: 0; }
+  to  { transform: translate(-50%, 0);    opacity: 1; }
+}
